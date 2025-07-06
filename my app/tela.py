@@ -1,6 +1,5 @@
-# Importações necessárias
 import flet as ft
-from dados import *  # Suas funções de CRUD
+from dados import *
 
 # Referências
 idioma_atual = ft.Ref[ft.Text]()
@@ -31,16 +30,18 @@ def main(page: ft.Page):
         nome_login.focus()
         page.update()
 
-    def cadastro():
-        ...
+    
 
-    def go_to_register(e):
-        page.views.append(register_view())
+
+    def ir_para_tela_cadastro(e):
+        page.views.append(tela_cadastro())
         page.update()
+
 
     def back_to_login(e):
         page.views.pop()
         page.update()
+
 
     def login():
         return ft.View(
@@ -56,7 +57,7 @@ def main(page: ft.Page):
                             senha_login,
                             mensagem_erro,
                             ft.ElevatedButton("Entrar", on_click=validacao_login),
-                            ft.TextButton("Ainda não tem uma conta? Cadastre-se", on_click=go_to_register),
+                            ft.TextButton("Ainda não tem uma conta? Cadastre-se", on_click=ir_para_tela_cadastro),
                         ],
                         alignment=ft.MainAxisAlignment.CENTER,
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -65,15 +66,42 @@ def main(page: ft.Page):
             ]
         )
 
-    def register_view():
+    # ---- Variaveis que recebem as informações do cadastro ----
+    nome_cadastro = ft.TextField(label="Nome de usuário", width=300)
+    email_cadastro = ft.TextField(label="E-mail", width=300)
+    senha_cadastro = ft.TextField(label="Senha (mínimo 6 dígitos)", password = True, can_reveal_password=True, width=300)
+    confirmar_senha = ft.TextField(label="Confirmar senha", password=True, can_reveal_password=True, width=300)
+    erro_cadastro = ft.Text("Usuário já existe!", color=ft.Colors.RED, visible=False)
+
+    def cadastro(e):
+        for conta in valido:
+            if nome_cadastro.value in conta:
+                erro_cadastro.visible = True
+
+            elif nome_cadastro.value.count(' ') > 0:
+                erro_cadastro.value = "Não é permitido espaços em branco!"
+                erro_cadastro.visible = True
+
+            elif 8 < len(nome_cadastro.value.strip()) < 2:
+                erro_cadastro.value = "2 a 8 caracteres permitidos!"
+                erro_cadastro.visible = True
+
+            else:
+                ...
+
+            page.update()
+
+            
+    def tela_cadastro():
         return ft.View(
             "/register",
             controls=[
                 ft.Text("Cadastre-se", size=30, weight="bold"),
-                ft.TextField(label="Nome de usuário", width=300),
-                ft.TextField(label="E-mail", width=300),
-                ft.TextField(label="Senha (mínimo 6 dígitos)", password=True, can_reveal_password=True, width=300),
-                ft.TextField(label="Confirmar senha", password=True, can_reveal_password=True, width=300),
+                nome_cadastro,
+                erro_cadastro,
+                email_cadastro,
+                senha_cadastro,
+                confirmar_senha,
                 ft.ElevatedButton("Criar conta", on_click=cadastro),
                 ft.TextButton("Já tem uma conta? Voltar para Login", on_click=back_to_login)
             ],
@@ -134,7 +162,7 @@ def main(page: ft.Page):
                     ft.Text("Minhas palavras em Inglês", size=24, weight="bold"),
                     ft.Container(expand=True),
                     ft.IconButton(icon=ft.Icons.SETTINGS, icon_color=ft.Colors.BLUE_GREY),
-                    ft.IconButton(icon=ft.Icons.LOGOUT, icon_color=ft.Colors.BLUE_GREY)
+                    ft.IconButton(icon=ft.Icons.LOGOUT, icon_color=ft.Colors.BLUE_GREY, on_click=back_to_login)
                 ]),
                 ft.Row(
                     expand=True,
