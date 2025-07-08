@@ -74,24 +74,42 @@ def main(page: ft.Page):
     erro_cadastro = ft.Text("Usuário já existe!", color=ft.Colors.RED, visible=False)
 
     def cadastro(e):
+        erro_cadastro.visible = False
+        erro_cadastro.value = ""
+        page.update()
+
+        nome = nome_cadastro.value.strip()
+
         for conta in valido:
-            if nome_cadastro.value in conta:
+            if nome in conta:
+                erro_cadastro.value = "Usuário já existe!"
                 erro_cadastro.visible = True
+                page.update()
+                return
 
-            elif nome_cadastro.value.count(' ') > 0:
-                erro_cadastro.value = "Não é permitido espaços em branco!"
-                erro_cadastro.visible = True
-
-            elif 8 < len(nome_cadastro.value.strip()) < 2:
-                erro_cadastro.value = "2 a 8 caracteres permitidos!"
-                erro_cadastro.visible = True
-
-            else:
-                ...
-
+        if ' ' in nome:
+            erro_cadastro.value = "Não é permitido espaços em branco!"
+            erro_cadastro.visible = True
             page.update()
+            return
 
-            
+        if not (2 <= len(nome) <= 8):
+            erro_cadastro.value = "Permitido apenas entre 2 e 8 caracteres!"
+            erro_cadastro.visible = True
+            page.update()
+            return
+        
+        if not ("@gmail.com" in email_cadastro):
+            erro_cadastro.value = "E-mail inválido!"
+            erro_cadastro.visible = True
+            page.update()
+            return
+        
+
+        else:
+            return
+
+    
     def tela_cadastro():
         return ft.View(
             "/register",
