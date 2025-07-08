@@ -71,44 +71,70 @@ def main(page: ft.Page):
     email_cadastro = ft.TextField(label="E-mail", width=300)
     senha_cadastro = ft.TextField(label="Senha (mínimo 6 dígitos)", password = True, can_reveal_password=True, width=300)
     confirmar_senha = ft.TextField(label="Confirmar senha", password=True, can_reveal_password=True, width=300)
-    erro_cadastro = ft.Text("Usuário já existe!", color=ft.Colors.RED, visible=False)
+    erro_nome = ft.Text("", color=ft.Colors.RED, visible=False)
+    erro_email = ft.Text("", color=ft.Colors.RED, visible=False)
+    erro_senha = ft.Text("", color=ft.Colors.RED, visible=False)
+    erro_confirmar_senha = ft.Text("", color=ft.Colors.RED, visible=False)
 
-    def cadastro(e):
-        erro_cadastro.visible = False
-        erro_cadastro.value = ""
+    def validar_cadastro(e):
+        erro_nome.visible = False
+        erro_nome.value = ""
+        erro_email.visible = False
+        erro_email.value = ""
+        erro_senha.visible = False
+        erro_senha.value = ""
+        erro_confirmar_senha.visible = False
+        erro_confirmar_senha.value = ""
         page.update()
 
         nome = nome_cadastro.value.strip()
-
+        email = email_cadastro.value.strip()
+        senha = senha_cadastro.value.strip()
+        
         for conta in valido:
             if nome in conta:
-                erro_cadastro.value = "Usuário já existe!"
-                erro_cadastro.visible = True
+                erro_nome.value = "Usuário já existe!"
+                erro_nome.visible = True
+                page.update()
+                return
+            if email in conta:
+                erro_email.value = "Esse e-mail está vinculado a uma conta!"
+                erro_email.visible = True
                 page.update()
                 return
 
         if ' ' in nome:
-            erro_cadastro.value = "Não é permitido espaços em branco!"
-            erro_cadastro.visible = True
+            erro_nome.value = "Não é permitido espaços em branco!"
+            erro_nome.visible = True
             page.update()
             return
 
         if not (2 <= len(nome) <= 8):
-            erro_cadastro.value = "Permitido apenas entre 2 e 8 caracteres!"
-            erro_cadastro.visible = True
+            erro_nome.value = "Permitido apenas entre 2 e 8 caracteres!"
+            erro_nome.visible = True
             page.update()
             return
         
-        if not ("@gmail.com" in email_cadastro):
-            erro_cadastro.value = "E-mail inválido!"
-            erro_cadastro.visible = True
+        if not ("@gmail.com" in email) or ' ' in email or email == '':
+            erro_email.value = "E-mail inválido!"
+            erro_email.visible = True
             page.update()
             return
         
-
-        else:
+        if not (6 <= len(senha)):
+            erro_senha.value = "Deve conter 6 ou mais dígitos!"
+            erro_senha.visible = True
+            page.update()
             return
-
+        
+        if confirmar_senha.value.strip() != senha:
+            erro_confirmar_senha.value = "As duas senhas devem ser iguais!"
+            erro_confirmar_senha.visible = True
+            page.update()
+            return
+        
+        create(nome, email, senha)
+        
     
     def tela_cadastro():
         return ft.View(
@@ -116,11 +142,14 @@ def main(page: ft.Page):
             controls=[
                 ft.Text("Cadastre-se", size=30, weight="bold"),
                 nome_cadastro,
-                erro_cadastro,
+                erro_nome,
                 email_cadastro,
+                erro_email,
                 senha_cadastro,
+                erro_senha,
                 confirmar_senha,
-                ft.ElevatedButton("Criar conta", on_click=cadastro),
+                erro_confirmar_senha,
+                ft.ElevatedButton("Criar conta", on_click=validar_cadastro),
                 ft.TextButton("Já tem uma conta? Voltar para Login", on_click=back_to_login)
             ],
             vertical_alignment=ft.MainAxisAlignment.CENTER,
