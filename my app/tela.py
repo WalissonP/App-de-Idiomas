@@ -38,7 +38,7 @@ def main(page: ft.Page):
         page.update()
 
 
-    def back_to_login(e):
+    def back_to_login(e=None):
         page.views.pop()
         page.update()
 
@@ -90,8 +90,10 @@ def main(page: ft.Page):
         nome = nome_cadastro.value.strip()
         email = email_cadastro.value.strip()
         senha = senha_cadastro.value.strip()
+
+        valido_atualizado = read()
         
-        for conta in valido:
+        for conta in valido_atualizado:
             if nome in conta:
                 erro_nome.value = "Usuário já existe!"
                 erro_nome.visible = True
@@ -134,9 +136,20 @@ def main(page: ft.Page):
             return
         
         create(nome, email, senha)
+        page.update()
+        back_to_login()
         
     
     def tela_cadastro():
+        erro_nome.visible = False
+        nome_cadastro.value = ""
+        erro_email.visible = False
+        email_cadastro.value = ""
+        erro_senha.visible = False
+        senha_cadastro.value = ""
+        erro_confirmar_senha.visible = False
+        confirmar_senha.value = ""
+        page.update()
         return ft.View(
             "/register",
             controls=[
@@ -150,7 +163,7 @@ def main(page: ft.Page):
                 confirmar_senha,
                 erro_confirmar_senha,
                 ft.ElevatedButton("Criar conta", on_click=validar_cadastro),
-                ft.TextButton("Já tem uma conta? Voltar para Login", on_click=back_to_login)
+                ft.TextButton("Já tem uma conta? Faça login", on_click=back_to_login)
             ],
             vertical_alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER
