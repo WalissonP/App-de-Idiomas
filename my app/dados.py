@@ -1,7 +1,7 @@
 import mysql.connector
 
 
-def create(nome, email, senha):
+def create(nome=None, email=None, senha=None, idioma=None, palavra=None, cadastro = False):
     conexao = mysql.connector.connect(
     host='localhost',
     user='root',
@@ -10,11 +10,19 @@ def create(nome, email, senha):
     )
     cursor = conexao.cursor()
 
-    comando = f'INSERT INTO dados (nome, email, senha) VALUES ("{nome}", "{email}", "{senha}")'
-    cursor.execute(comando)
-    conexao.commit() # edita o banco de dados
-    cursor.close()
-    conexao.close()
+    if cadastro == False:
+        comando = f'INSERT INTO dados (nome, email, senha) VALUES ("{nome}", "{email}", "{senha}")'
+        cursor.execute(comando)
+        conexao.commit()
+        cursor.close()
+        conexao.close()
+    
+    else:
+        comando = f'INSERT INTO palavras (nome, idioma, palavra) VALUES ("{nome}", "{idioma}", "{palavra}")'
+        cursor.execute(comando)
+        conexao.commit()
+        cursor.close()
+        conexao.close()
 
 def read():
     conexao = mysql.connector.connect(
