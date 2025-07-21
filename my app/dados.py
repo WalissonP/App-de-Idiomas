@@ -71,3 +71,26 @@ def delete(nome):
     conexao.close()
 
 
+def buscar_palavras_por_idioma(nome):
+    conexao = mysql.connector.connect(
+        host='localhost',
+        user='root',
+        password='1234567',
+        database='usuarios',
+    )
+    cursor = conexao.cursor()
+
+    comando = f'SELECT idioma, palavra FROM palavras WHERE nome = "{nome}"'
+    cursor.execute(comando)
+    resultado = cursor.fetchall()
+
+    cursor.close()
+    conexao.close()
+
+    # Retorna um dicionário: { "Inglês": ["dog", "cat"], "Espanhol": ["hola"] }
+    palavras_por_idioma = {}
+    for idioma, palavra in resultado:
+        if idioma not in palavras_por_idioma:
+            palavras_por_idioma[idioma] = []
+        palavras_por_idioma[idioma].append(palavra)
+    return palavras_por_idioma
