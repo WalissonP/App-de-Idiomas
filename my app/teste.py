@@ -1,189 +1,345 @@
 import flet as ft
-from flet import (
-    Page,
-    Text,
-    Column,
-    Container,
-    TextField,
-    IconButton,
-    icons,
-    ElevatedButton,
-    Divider,
-    Ref,
-    Row,
-    alignment,
-    ListView,
-)
-from dados import listar_idiomas, listar_palavras, adicionar_idioma, adicionar_palavra
+from dados import *
 
-idioma_selecionado = Ref[Text]()
-campo_palavra = Ref[TextField]()
-lista_palavras = Ref[ListView]()
-total_palavras = Ref[Text]()
+idioma_atual = ft.Ref[ft.Text]()
+lista_palavras_ref = ft.Ref[ft.Column]()
+nova_palavra = ft.Ref[ft.TextField]()
+menu_idiomas = ft.Ref[ft.Column]()
+mostrar_input_idioma = ft.Ref[ft.Container]()
+input_novo_idioma = ft.Ref[ft.TextField]()
+lista_idiomas = ft.Ref[ft.Column]()
+mostrar_input = ft.Ref[ft.Container]()
+campo_idioma = ft.Ref[ft.TextField]()
+idioma_selecionado = ft.Ref[str]()
+idioma_selecionado.current = ""
+coluna_palavras = ft.Ref[ft.Column]()
 
-def main(page: Page):
+
+
+def main(page: ft.Page):
+    page.scroll = ft.ScrollMode.AUTO
     page.title = "App de Idiomas"
-    page.theme_mode = ft.ThemeMode.DARK
-    page.scroll = "AUTO"
+    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
 
-    def carregar_idiomas():
-        lista = listar_idiomas()
-        idiomas_controls = []
-        for idioma in lista:
-            idiomas_controls.append(
-                ft.TextButton(
-                    content=ft.Text(idioma, size=16),
-                    on_click=lambda e, i=idioma: selecionar_idioma(i),
-                )
-            )
-        return idiomas_controls
+    valido = read()
+    nome_login = ft.TextField(label="Usuário", width=300)
+    senha_login = ft.TextField(label="Senha", width=300, password=True, can_reveal_password=True)
+    mensagem_erro = ft.Text("Usuário ou senha incorretos!", color=ft.Colors.RED, visible=False)
 
-    def selecionar_idioma(idioma):
-        idioma_selecionado.current.value = idioma
-        idioma_selecionado.current.update()
-        mostrar_palavras()
-
-    def mostrar_palavras():
-        idioma = idioma_selecionado.current.value
-        palavras = listar_palavras(idioma)
-        lista_palavras.current.controls.clear()
-
-        for palavra in palavras:
-            lista_palavras.current.controls.append(
-                ft.Text(palavra, size=16)
-            )
-
-        total_palavras.current.value = f"Total: {len(palavras)} palavras"
-        total_palavras.current.update()
-        lista_palavras.current.update()
-
-    def adicionar_idioma_novo(e):
-        def confirmar(e):
-            nome_idioma = campo.value.strip()
-            if nome_idioma:
-                adicionar_idioma(nome_idioma)
-                menu_idiomas.controls.insert(
-                    -1,
-                    ft.TextButton(
-                        content=ft.Text(nome_idioma, size=16),
-                        on_click=lambda e, i=nome_idioma: selecionar_idioma(i),
-                    )
-                )
-                menu_idiomas.update()
-                selecionar_idioma(nome_idioma)
-            dlg.open = False
-            page.update()
-
-        campo = TextField(label="Novo idioma", autofocus=True)
-
-        dlg = ft.AlertDialog(
-            title=Text("Adicionar novo idioma"),
-            content=campo,
-            actions=[
-                ElevatedButton("Adicionar", on_click=confirmar),
-                ElevatedButton("Cancelar", on_click=lambda e: fechar_dialogo())
-            ],
-        )
-
-        def fechar_dialogo():
-            dlg.open = False
-            page.update()
-
-        page.dialog = dlg
-        dlg.open = True
+    def validacao_login(e):
+        for conta in read():
+            if nome_login.value in conta and senha_login.value in conta:
+                mensagem_erro.visible = False
+                ir_para_tela_principal()
+                return
+        senha_login.value = ""
+        mensagem_erro.visible = True
+        nome_login.focus()
         page.update()
 
-    def adicionar_nova_palavra(e):
-        texto = campo_palavra.current.value.strip()
-        idioma = idioma_selecionado.current.value
+    def ir_para_tela_cadastro(e):
+        page.views.append(tela_cadastro())
+        page.update()
 
-        if texto and idioma:
-            adicionar_palavra(texto, idioma)
-            campo_palavra.current.value = ""
-            campo_palavra.current.update()
+    def back_to_login(e=None):
+        page.views.pop()
+        page.update()
+
+    def login():
+        return ft.View(
+            "/login",
+            controls=[
+                ft.Container(
+                    alignment=ft.alignment.center,
+                    expand=True,
+                    content=ft.Column(
+                        [
+                            ft.Text("Login", size=30, weight="bold"),
+                            nome_login,
+                            senha_login,
+                            mensagem_erro,
+                            ft.ElevatedButton("Entrar", on_click=validacao_login),
+                            ft.TextButton("Ainda não tem uma conta? Cadastre-se", on_click=ir_para_tela_cadastro),
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    ),
+                )
+            ]
+        )
+
+    nome_cadastro = ft.TextField(label="Nome de usuário", width=300)
+    email_cadastro = ft.TextField(label="E-mail", width=300)
+    senha_cadastro = ft.TextField(label="Senha (mínimo 6 dígitos)", password=True, can_reveal_password=True, width=300)
+    confirmar_senha = ft.TextField(label="Confirmar senha", password=True, can_reveal_password=True, width=300)
+    erro_nome = ft.Text("", color=ft.Colors.RED, visible=False)
+    erro_email = ft.Text("", color=ft.Colors.RED, visible=False)
+    erro_senha = ft.Text("", color=ft.Colors.RED, visible=False)
+    erro_confirmar_senha = ft.Text("", color=ft.Colors.RED, visible=False)
+
+    def validar_cadastro(e):
+        erro_nome.visible = erro_email.visible = erro_senha.visible = erro_confirmar_senha.visible = False
+        erro_nome.value = erro_email.value = erro_senha.value = erro_confirmar_senha.value = ""
+        page.update()
+
+        nome = nome_cadastro.value.strip()
+        email = email_cadastro.value.strip()
+        senha = senha_cadastro.value.strip()
+
+        for conta in read():
+            if nome in conta:
+                erro_nome.value = "Usuário já existe!"
+                erro_nome.visible = True
+                page.update()
+                return
+            if email in conta:
+                erro_email.value = "Esse e-mail está vinculado a uma conta!"
+                erro_email.visible = True
+                page.update()
+                return
+
+        if ' ' in nome:
+            erro_nome.value = "Não é permitido espaços em branco!"
+            erro_nome.visible = True
+            page.update()
+            return
+
+        if not (2 <= len(nome) <= 8):
+            erro_nome.value = "Permitido apenas entre 2 e 8 caracteres!"
+            erro_nome.visible = True
+            page.update()
+            return
+
+        if not ("@gmail.com" in email) or ' ' in email or email == '':
+            erro_email.value = "E-mail inválido!"
+            erro_email.visible = True
+            page.update()
+            return
+
+        if not (6 <= len(senha)):
+            erro_senha.value = "Deve conter 6 ou mais dígitos!"
+            erro_senha.visible = True
+            page.update()
+            return
+
+        if confirmar_senha.value.strip() != senha:
+            erro_confirmar_senha.value = "As duas senhas devem ser iguais!"
+            erro_confirmar_senha.visible = True
+            page.update()
+            return
+
+        create(nome, email, senha)
+        page.update()
+        back_to_login()
+
+    def tela_cadastro():
+        nome_cadastro.value = email_cadastro.value = senha_cadastro.value = confirmar_senha.value = ""
+        erro_nome.visible = erro_email.visible = erro_senha.visible = erro_confirmar_senha.visible = False
+        page.update()
+        return ft.View(
+            "/register",
+            controls=[
+                ft.Text("Cadastre-se", size=30, weight="bold"),
+                nome_cadastro,
+                erro_nome,
+                email_cadastro,
+                erro_email,
+                senha_cadastro,
+                erro_senha,
+                confirmar_senha,
+                erro_confirmar_senha,
+                ft.ElevatedButton("Criar conta", on_click=validar_cadastro),
+                ft.TextButton("Já tem uma conta? Faça login", on_click=back_to_login)
+            ],
+            vertical_alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER
+        )
+
+    def selecionar_idioma(e):
+        idioma_selecionado.current = e.control.data
+        idioma_atual.current.value = f"Minhas palavras em {idioma_selecionado.current}"
+        mostrar_palavras()
+        page.update()
+
+    
+    def exibir_input_idioma(e):
+        mostrar_input.current.visible = True
+        page.update()
+
+
+
+    def adicionar_palavra(e):
+        nova = nova_palavra.current.value.strip()
+        if nova and idioma_selecionado.current:
+            create(
+                nome=nome_login.value,
+                idioma=idioma_selecionado.current,
+                palavra=nova,
+                cadastro=True
+            )
+            nova_palavra.current.value = ""
             mostrar_palavras()
 
-    # Lateral esquerda: idiomas
-    menu_idiomas = Column(
-        controls=carregar_idiomas() + [
-            Divider(),
-            ft.TextButton("+ Adicionar novo idioma", on_click=adicionar_idioma_novo),
-        ]
-    )
 
-    # Centro: palavras do idioma
-    conteudo_principal = Column(
-        spacing=10,
-        controls=[
-            Row(
-                alignment="SPACE_BETWEEN",
-                controls=[
-                    Text(ref=idioma_selecionado, value="Selecione um idioma", size=24, weight="bold"),
-                    IconButton(icon=icons.SETTINGS)
-                ]
-            ),
-            Divider(),
-            Row(
-                alignment="SPACE_BETWEEN",
-                controls=[
-                    Text(ref=total_palavras, value="Total: 0 palavras", size=16, weight="bold"),
-                    Row(
-                        controls=[
-                            TextField(ref=campo_palavra, hint_text="Nova palavra"),
-                            IconButton(icon=icons.ADD, on_click=adicionar_nova_palavra),
-                        ]
-                    )
-                ]
-            ),
-            Divider(),
-            ListView(ref=lista_palavras, expand=True),
-        ]
-    )
+    def mostrar_palavras():
+        coluna_palavras.current.controls.clear()
 
-    # Lateral direita: área da IA
-    painel_chat = Column(
-        controls=[
-            Text("Chat com a IA (em breve)", size=18, weight="bold"),
-            Divider(),
-            Text("Área reservada para dúvidas com IA...", italic=True, size=14),
-        ]
-    )
+        if not idioma_selecionado.current:
+            return
 
-    # Layout final
-    page.add(
-        Row(
+        palavras = buscar_palavras_por_idioma(nome_login.value).get(idioma_selecionado.current, [])
+        
+        for palavra in palavras:
+            coluna_palavras.current.controls.append(ft.Text(palavra, color=ft.Colors.WHITE))
+        
+        page.update()
+
+
+    def adicionar_idioma(e):
+        nome = campo_idioma.current.value.strip().capitalize()
+        if nome:
+            lista_idiomas.current.controls.append(
+                ft.TextButton(nome, style=ft.ButtonStyle(color=ft.Colors.WHITE), data=nome, on_click=selecionar_idioma)
+            )
+            campo_idioma.current.value = ""
+            mostrar_input.current.visible = False
+            page.update()
+    
+    def mostrar_idiomas_do_usuario():
+        idiomas = buscar_palavras_por_idioma(nome_login.value)
+        lista_idiomas.current.controls.clear()
+
+        for idioma in idiomas:
+            lista_idiomas.current.controls.append(
+                ft.TextButton(idioma, style=ft.ButtonStyle(color=ft.Colors.WHITE), data=idioma, on_click=selecionar_idioma)
+            )
+        page.update()
+
+
+    menu_lateral = ft.Container(
+        bgcolor=ft.Colors.BLUE_GREY,
+        width=220,
+        padding=20,
+        border_radius=ft.border_radius.all(12),
+        shadow=ft.BoxShadow(blur_radius=6, color=ft.Colors.GREY_900),
+        content=ft.Column(
             expand=True,
             spacing=10,
             controls=[
-                Container(
-                    width=220,
-                    padding=10,
-                    bgcolor=ft.colors.BLUE_GREY_700,
-                    border_radius=10,
-                    content=Column(
+                ft.Row([
+                    ft.Text("Idiomas", size=22, weight="bold", color=ft.Colors.WHITE),
+                    ft.Container(expand=True),
+                ]),
+                ft.Container(
+                    expand=True,
+                    content=ft.Column(
+                        scroll=ft.ScrollMode.AUTO,
+                        spacing=5,
                         controls=[
-                            Text("Idiomas", size=20, weight="bold"),
-                            Divider(),
-                            menu_idiomas,
+                            ft.Column(ref=lista_idiomas),
+                            ft.Divider(color=ft.Colors.WHITE),
+                            ft.TextButton("+ Adicionar novo idioma", style=ft.ButtonStyle(color=ft.Colors.WHITE), on_click=exibir_input_idioma),
+                            ft.Container(
+                                ref=mostrar_input,
+                                visible=False,
+                                content=ft.Row([
+                                    ft.TextField(ref=campo_idioma, hint_text="Nome do idioma", width=120, dense=True, height=40),
+                                    ft.IconButton(icon=ft.Icons.CHECK, icon_color=ft.Colors.GREEN, on_click=adicionar_idioma),
+                                ])
+                            )
                         ]
                     )
-                ),
-                Container(
-                    expand=True,
-                    padding=15,
-                    bgcolor=ft.colors.BLUE_GREY_200,
-                    border_radius=10,
-                    content=conteudo_principal
-                ),
-                Container(
-                    width=260,
-                    padding=15,
-                    bgcolor=ft.colors.BLUE_GREY_300,
-                    border_radius=10,
-                    content=painel_chat
                 )
             ]
         )
     )
+
+
+    conteudo = ft.Container(
+        expand=True,
+        padding=30,
+        content=ft.Column(
+            expand=True,
+            spacing=25,
+            controls=[
+                ft.Row([
+                    ft.Text(ref=idioma_atual, value="Minhas palavras em Inglês", size=24, weight="bold"),
+                    ft.Container(expand=True),
+                    ft.IconButton(icon=ft.Icons.SETTINGS, icon_color=ft.Colors.BLUE_GREY),
+                    ft.IconButton(icon=ft.Icons.LOGOUT, icon_color=ft.Colors.BLUE_GREY, on_click=back_to_login)
+                ]),
+                ft.Row(
+                    expand=True,
+                    spacing=30,
+                    controls=[
+                        ft.Container(
+                            expand=2,
+                            bgcolor=ft.Colors.BLUE_GREY_200,
+                            border_radius=12,
+                            padding=20,
+                            shadow=ft.BoxShadow(blur_radius=6, color=ft.Colors.GREY_100, offset=ft.Offset(2, 2)),
+                            content=ft.Column(
+                                spacing=15,
+                                controls=[
+                                    ft.Row(
+                                        controls=[
+                                            ft.Text("Total: 0 palavras", size=18, weight="bold", color=ft.Colors.BLACK),
+                                            ft.Container(expand=True),
+                                            ft.TextField(ref=nova_palavra, hint_text="Nova palavra", color=ft.Colors.BLACK, width=250),
+                                            ft.IconButton(icon=ft.Icons.ADD, tooltip="Adicionar", icon_color=ft.Colors.BLACK, on_click=adicionar_palavra),
+                                        ]
+                                    ),
+                                    ft.Divider(),
+                                    ft.Column(ref=coluna_palavras),
+                                ]
+                            )
+                        ),
+                        ft.Container(
+                            expand=1,
+                            bgcolor=ft.Colors.BLUE_GREY_200,
+                            border_radius=12,
+                            padding=20,
+                            shadow=ft.BoxShadow(blur_radius=6, color=ft.Colors.GREY_100, offset=ft.Offset(2, 2)),
+                            content=ft.Column(
+                                spacing=10,
+                                controls=[
+                                    ft.Text("Chat com a IA (em breve)", size=18, weight="bold", color=ft.Colors.BLACK),
+                                    ft.Divider(),
+                                    ft.Text("Área reservada para dúvidas com IA...", italic=True, color=ft.Colors.GREY_700)
+                                ]
+                            )
+                        )
+                    ]
+                )
+            ]
+        )
+    )
+
+    def ir_para_tela_principal():
+        global coluna_palavras
+        page.views.append(
+            ft.View(
+                route="/principal",
+                controls=[
+                    ft.Container(
+                        expand=True,
+                        bgcolor=ft.Colors.BLUE_GREY_900,
+                        content=ft.Row(
+                            expand=True,
+                            spacing=0,
+                            controls=[menu_lateral, conteudo]
+                        )
+                    )
+                ],
+                vertical_alignment=ft.MainAxisAlignment.START,
+                horizontal_alignment=ft.CrossAxisAlignment.START
+            )
+        )
+        mostrar_idiomas_do_usuario()
+        mostrar_palavras()
+        page.go("/principal")
+
+    page.views.append(login())
+    page.update()
 
 ft.app(target=main)

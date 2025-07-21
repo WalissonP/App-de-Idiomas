@@ -24,7 +24,7 @@ def create(nome=None, email=None, senha=None, idioma=None, palavra=None, cadastr
         cursor.close()
         conexao.close()
 
-def read():
+def read(usuario='', idioma=''):
     conexao = mysql.connector.connect(
     host='localhost',
     user='root',
@@ -33,12 +33,21 @@ def read():
     )
     cursor = conexao.cursor()
 
-    comando = 'select * from dados'
-    cursor.execute(comando)
-    resultado = cursor.fetchall() # ler o banco de dados
-    cursor.close()
-    conexao.close()
-    return resultado
+    if usuario == '' == idioma:
+        comando = 'select * from dados'
+        cursor.execute(comando)
+        resultado = cursor.fetchall() # ler o banco de dados
+        cursor.close()
+        conexao.close()
+        return resultado
+    
+    else:
+        cursor = conexao.cursor()
+        comando = f"SELECT palavra FROM palavras WHERE nome = %s AND idioma = %s"
+        cursor.execute(comando, (usuario, idioma))
+        resultado = cursor.fetchall()
+        conexao.close()
+        return [r[0] for r in resultado]
 
 def update(nome, senha):
     conexao = mysql.connector.connect(
