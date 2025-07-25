@@ -13,6 +13,8 @@ campo_idioma = ft.Ref[ft.TextField]()
 idioma_selecionado = ft.Ref[str]()
 idioma_selecionado.current = ""
 coluna_palavras = ft.Ref[ft.Column]()
+menu_config = ft.Ref[ft.Container]()
+
 
 
 
@@ -275,72 +277,121 @@ def main(page: ft.Page):
         )
     )
 
+    # Funções para alternar e esconder o menu
+    def alternar_menu_config():
+        menu_config.current.visible = not menu_config.current.visible
+        page.update()
 
-    conteudo = ft.Container(
-        expand=True,
-        padding=30,
+    menu_config_container = ft.Container(
+        ref=menu_config,
+        visible=False,
+        bgcolor=ft.Colors.BLUE_GREY_900,
+        width=250,
+        padding=20,
+        border_radius=10,
+        right=20,
+        top=70,
+        shadow=ft.BoxShadow(blur_radius=12, color=ft.Colors.BLACK, offset=ft.Offset(4, 4)),
         content=ft.Column(
-            expand=True,
-            spacing=25,
             controls=[
-                ft.Row([
-                    ft.Text(ref=idioma_atual, value="Minhas palavras em Inglês", size=24, weight="bold"),
-                    ft.Container(expand=True),
-                    ft.IconButton(icon=ft.Icons.SETTINGS, icon_color=ft.Colors.BLUE_GREY),
-                    ft.IconButton(icon=ft.Icons.LOGOUT, icon_color=ft.Colors.BLUE_GREY, on_click=back_to_login)
-                ]),
                 ft.Row(
-                    expand=True,
-                    spacing=30,
+                    alignment=ft.MainAxisAlignment.END,
                     controls=[
-                        ft.Container(
-                            expand=2,
-                            bgcolor=ft.Colors.BLUE_GREY_200,
-                            border_radius=12,
-                            padding=20,
-                            shadow=ft.BoxShadow(blur_radius=6, color=ft.Colors.GREY_100, offset=ft.Offset(2, 2)),
-                            content=ft.Column(
-                                spacing=15,
-                                controls=[
-                                    ft.Row(
-                                        controls=[
-                                            ft.ElevatedButton(
-                                                text="Revisar palavras",
-                                                icon=ft.Icons.LIST_ALT,
-                                                on_click=lambda e: print("Função de revisão futura"),
-                                                bgcolor=ft.Colors.BLUE_GREY_500,
-                                                color=ft.Colors.WHITE
-                                            ),
-                                            ft.Container(expand=True),
-                                            ft.TextField(ref=nova_palavra, hint_text="Nova palavra", color=ft.Colors.BLACK, width=250),
-                                            ft.IconButton(icon=ft.Icons.ADD, tooltip="Adicionar", icon_color=ft.Colors.BLACK, on_click=adicionar_palavra),
-                                        ]
-                                    ),
-                                    ft.Divider(),
-                                    ft.Column(ref=coluna_palavras),
-                                ]
-                            )
-                        ),
-                        ft.Container(
-                            expand=1,
-                            bgcolor=ft.Colors.BLUE_GREY_200,
-                            border_radius=12,
-                            padding=20,
-                            shadow=ft.BoxShadow(blur_radius=6, color=ft.Colors.GREY_100, offset=ft.Offset(2, 2)),
-                            content=ft.Column(
-                                spacing=10,
-                                controls=[
-                                    ft.Text("Chat com a IA (em breve)", size=18, weight="bold", color=ft.Colors.BLACK),
-                                    ft.Divider(),
-                                    ft.Text("Área reservada para dúvidas com IA...", italic=True, color=ft.Colors.GREY_700)
-                                ]
-                            )
+                        ft.Text("Configurações", size=18, weight="bold"),
+                        ft.IconButton(
+                            icon=ft.Icons.CLOSE,
+                            icon_color=ft.Colors.WHITE,
+                            on_click=lambda e: alternar_menu_config()
                         )
                     ]
-                )
+                ),
+                ft.Divider(),
+                ft.Switch(label="Modo escuro (em breve)"),
+                ft.Switch(label="Notificações"),
+                ft.Switch(label="Som do app")
             ]
         )
     )
+
+
+    
+    conteudo = ft.Stack(
+        expand=True,
+        alignment=ft.alignment.top_right,
+        controls=[
+            ft.Container(
+                expand=True,
+                padding=30,
+                content=ft.Column(
+                    expand=True,
+                    spacing=25,
+                    controls=[
+                        ft.Row([
+                            ft.Text(ref=idioma_atual, value="Minhas palavras em Inglês", size=24, weight="bold"),
+                            ft.Container(expand=True),
+                            ft.IconButton(
+                                icon=ft.Icons.SETTINGS,
+                                icon_color=ft.Colors.BLUE_GREY,
+                                on_click=lambda e: alternar_menu_config()
+                            ),
+                        ]),
+                        ft.Row(
+                            expand=True,
+                            spacing=30,
+                            controls=[
+                                ft.Container(
+                                    expand=2,
+                                    bgcolor=ft.Colors.BLUE_GREY_200,
+                                    border_radius=12,
+                                    padding=20,
+                                    shadow=ft.BoxShadow(blur_radius=6, color=ft.Colors.GREY_100, offset=ft.Offset(2, 2)),
+                                    content=ft.Column(
+                                        spacing=15,
+                                        controls=[
+                                            ft.Row(
+                                                controls=[
+                                                    ft.ElevatedButton(
+                                                        text="Revisar palavras",
+                                                        icon=ft.Icons.LIST_ALT,
+                                                        on_click=lambda e: print("Função de revisão futura"),
+                                                        bgcolor=ft.Colors.BLUE_GREY_500,
+                                                        color=ft.Colors.WHITE
+                                                    ),
+                                                    ft.Container(expand=True),
+                                                    ft.TextField(ref=nova_palavra, hint_text="Nova palavra", color=ft.Colors.BLACK, width=250),
+                                                    ft.IconButton(icon=ft.Icons.ADD, tooltip="Adicionar", icon_color=ft.Colors.BLACK, on_click=adicionar_palavra),
+                                                ]
+                                            ),
+                                            ft.Divider(),
+                                            ft.Column(ref=coluna_palavras, scroll=ft.ScrollMode.AUTO, expand=True),
+                                        ]
+                                    )
+                                ),
+                                ft.Container(
+                                    expand=1,
+                                    bgcolor=ft.Colors.BLUE_GREY_200,
+                                    border_radius=12,
+                                    padding=20,
+                                    shadow=ft.BoxShadow(blur_radius=6, color=ft.Colors.GREY_100, offset=ft.Offset(2, 2)),
+                                    content=ft.Column(
+                                        spacing=10,
+                                        controls=[
+                                            ft.Text("Chat com a IA (em breve)", size=18, weight="bold", color=ft.Colors.BLACK),
+                                            ft.Divider(),
+                                            ft.Text("Área reservada para dúvidas com IA...", italic=True, color=ft.Colors.GREY_700)
+                                        ]
+                                    )
+                                )
+                            ]
+                        )
+                    ]
+                )
+            ),
+            menu_config_container
+        ]
+    )
+
+
 
     def ir_para_tela_principal():
         global coluna_palavras
